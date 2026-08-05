@@ -43,6 +43,8 @@ INSTALLED_APPS += [
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "apps.users",
+    "apps.projects",
+    "apps.chat",
 ]
 
 MIDDLEWARE = [
