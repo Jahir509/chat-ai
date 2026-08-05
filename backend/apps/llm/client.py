@@ -106,16 +106,28 @@ def upload_and_attach(project, django_file):
 
 
 def vector_store_file_status(project, file_id):
-    """Poll indexing status: in_progress | completed | failed | cancelled."""
+    """in_progress | completed | failed | cancelled, or None if undeterminable."""
+    if not project.vector_store_id:
+        logger.error("Project %s has files but no vector store", project.id)
+        return "failed"
     try:
         vs_file = get_client().vector_stores.files.retrieve(
             vector_store_id=project.vector_store_id, file_id=file_id
         )
+        logger.info(
+            "vector store file %s status=%s error=%s",
+            file_id, vs_file.status, getattr(vs_file, "last_error", None),
+        )
         return vs_file.status
-    except Exception as exc:  # noqa: BLE001 — status is best-effort
-        logger.warning("Status check failed for %s: %s", file_id, exc)
+    except APIStatusError as exc:
+        if exc.status_code == 404:
+            logger.warning("File %s not in vector store", file_id)
+            return "failed"
+        logger.error("Status check failed for %s: %s", file_id, exc)
         return None
-
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Status check errored for %s: %s", file_id, exc)
+        return None
 
 def delete_remote_file(project, file_id):
     """Detach from the vector store and delete the file. Best-effort."""

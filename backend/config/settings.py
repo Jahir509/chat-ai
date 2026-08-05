@@ -45,6 +45,7 @@ INSTALLED_APPS += [
     "apps.users",
     "apps.projects",
     "apps.chat",
+    "apps.files",
 ]
 
 MIDDLEWARE = [
