@@ -139,7 +139,34 @@ CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"]
 )
 
-
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Chatbot Platform API",
+    "DESCRIPTION": (
+        "Multi-tenant chatbot platform. Register, create a project, "
+        "attach prompts and files, then chat with the agent.\n\n"
+        "**Auth:** POST `/api/auth/login/` to get an access token, then "
+        "click **Authorize** and paste it as `Bearer <access_token>`."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SORT_OPERATIONS": False,
+    "SCHEMA_PATH_PREFIX": "/api",
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
+    "SWAGGER_UI_SETTINGS": {
+        "persistAuthorization": True,
+        "displayRequestDuration": True,
+        "docExpansion": "none",
+    },
+    "TAGS": [
+        {"name": "auth", "description": "Registration, login, token refresh"},
+        {"name": "projects", "description": "Projects and their prompts"},
+        {"name": "chat", "description": "Conversations and messages"},
+        {"name": "files", "description": "Project file uploads"},
+    ],
+}
 
 
 # OPENAI API KEY
