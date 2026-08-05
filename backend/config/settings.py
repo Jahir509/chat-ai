@@ -142,7 +142,7 @@ CORS_ALLOWED_ORIGINS = env.list(
 )
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Chatbot Platform API",
+    "TITLE": "Chat AI API",
     "DESCRIPTION": (
         "Multi-tenant chatbot platform. Register, create a project, "
         "attach prompts and files, then chat with the agent.\n\n"
