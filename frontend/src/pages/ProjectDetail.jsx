@@ -73,7 +73,7 @@ export default function ProjectDetail() {
 
       {tab === "chat" && <ChatPanel projectId={id} />}
       {tab === "prompts" && <PromptsPanel projectId={id} />}
-      {tab === "files" && <FilesPanel projectId={id} />}
+      {tab === "files" && <FilesPanel key={id} projectId={id} />}
     </div>
   );
 }
