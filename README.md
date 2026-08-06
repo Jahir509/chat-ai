@@ -12,7 +12,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Responses_API-412991?logo=openai&logoColor=white)](https://platform.openai.com/docs/api-reference/responses)
 
-[**Live demo**](https://chat-ai.jahirahmed.com) · [**API docs**](https://chat-ai.jahirahmed.com/api/docs/) · [**Setup guide**](./INSTALLATION.md) · [**Demo video**](https://drive.google.com/file/d/1bp384Ih2o98do6iBWiyhSeWfsnFvUSSV/view?usp=sharing)
+[**Live demo**](https://chat-ai.jahirahmed.com) · [**API docs**](https://chat-ai.jahirahmed.com/api/docs/) · [**Setup guide**](./INSTALLATION.md) · [**Demo video**](https://github.com/Jahir509/chat-ai/raw/main/video/demo-video.mp4)
 
 </div>
 
