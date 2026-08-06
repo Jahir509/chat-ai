@@ -52,7 +52,6 @@ Running it yourself takes about five minutes — see **[INSTALLATION.md](./INSTA
 - [API reference](#api-reference)
 - [Design decisions](#design-decisions)
 - [Non-functional requirements](#non-functional-requirements)
-- [Verification checklist](#verification-checklist)
 - [Known limitations](#known-limitations)
 - [Project structure](#project-structure)
 
@@ -349,26 +348,6 @@ The default is 30, and gunicorn kills any worker that exceeds it. A slow model r
 | **Performance** | Connection pooling and a process-level OpenAI client, so no TLS handshake per request. Windowed history keeps token counts flat as conversations grow. Optimistic UI updates make sends and deletes feel instant. Gzip compression and long-lived caching on static assets. |
 | **Reliability** | Timeouts and bounded retries on every upstream call, with transient failures mapped to a clean `503` and a readable message. User messages persisted before the API call, so failures never lose input. Guaranteed terminal state for async file indexing. Database `healthcheck` gates backend startup. `restart: unless-stopped` on every container. Structured logging of upstream failures. Best-effort remote cleanup so a vendor-side error can't create an undeletable local row. |
 
----
-
-## Verification checklist
-
-The behaviours worth checking after a deploy, in order:
-
-- [ ] Visiting the root while logged out redirects to `/login`
-- [ ] Registering with a weak password returns a readable field error
-- [ ] Registering the same email twice returns a uniqueness error, not a 500
-- [ ] A page refresh on `/projects/{uuid}` keeps you logged in and renders the page (SPA fallback)
-- [ ] Two projects with the same name under one account are rejected; the same name under two accounts is allowed
-- [ ] **"My name is X"** then **"What's my name?"** in one conversation → the agent remembers (history replay works)
-- [ ] Adding a system prompt like *reply only in haiku*, then starting a new chat, changes the agent's behaviour
-- [ ] Disabling that prompt reverts it
-- [ ] Uploading a document with an invented fact, then asking about it, produces a grounded answer (retrieval works)
-- [ ] A file reaches `Ready` and polling stops — network activity settles rather than repeating
-- [ ] Requesting another user's project ID returns `404`
-- [ ] `/api/docs/` loads and the **Authorize** button exercises protected endpoints
-- [ ] `/admin/` login works over HTTPS (proves the forwarded-scheme chain)
-- [ ] Stopping the backend mid-chat surfaces a readable error, not a blank panel
 
 ---
 
