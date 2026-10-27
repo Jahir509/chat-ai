@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { /* Link, */ useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { apiError } from "../api/client";
 import { Button, Card, ErrorBox, Input, Spinner } from "../ui";
@@ -60,12 +60,12 @@ export default function Login() {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        {/* <p className="mt-4 text-center text-sm text-slate-500">
           No account?{" "}
           <Link to="/register" className="text-indigo-600 hover:underline">
             Register
           </Link>
-        </p>
+        </p> */}
       </Card>
     </div>
   );

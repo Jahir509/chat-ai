@@ -53,7 +53,7 @@ def generate_reply(*, project, history, user_text):
         kwargs["tools"] = [
             {"type": "file_search", "vector_store_ids": [project.vector_store_id]}
         ]
-
+    logger.info("Request Input: %s", kwargs)
     try:
         logger.info("=== OpenAI request ===")
         logger.info("model: %s", kwargs["model"])

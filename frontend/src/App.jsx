@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+// import Register from "./pages/Register";
 import Projects from "./pages/Projects";
 import { Spinner } from "./ui";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -24,7 +24,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {/* <Route path="/register" element={<Register />} /> */}
       <Route
         path="/projects"
         element={
