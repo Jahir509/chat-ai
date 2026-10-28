@@ -1,130 +1,214 @@
-<div align="center">
-
 # ChatAI
 
-**A multi-tenant chatbot platform. Create agents, give them instructions and documents, and talk to them.**
+A multi-tenant chatbot platform. Create AI agents, give them instructions and documents, and chat with them.
 
 [![Django](https://img.shields.io/badge/Django-5.2-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![DRF](https://img.shields.io/badge/DRF-3.16-A30000)](https://www.django-rest-framework.org/)
+[![DRF](https://img.shields.io/badge/DRF-3.17-A30000)](https://www.django-rest-framework.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Tailwind](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Responses_API-412991?logo=openai&logoColor=white)](https://platform.openai.com/docs/api-reference/responses)
 
-[**Live demo**](https://chat-ai.jahirahmed.com) · [**API docs**](https://chat-ai.jahirahmed.com/api/docs/) · [**Setup guide**](./INSTALLATION.md) · [**Demo video**](https://github.com/Jahir509/chat-ai/raw/main/video/demo-video.mp4)
+**[Live demo](https://chat-ai.jahirahmed.com)** · **[API docs](https://chat-ai.jahirahmed.com/api/docs/)** · **[Setup guide](INSTALLATION.md)** · **[Demo video](https://github.com/Jahir509/chat-ai/raw/main/video/demo-video.mp4)**
 
-</div>
+![Chatting with an agent about an uploaded document](images/img-3.png)
 
----
-
-## What it is
-
-ChatAI lets a user register, create any number of **projects** (agents), configure each one with **system prompts**, optionally upload **documents** the agent can search, and hold **conversations** with it. Every project is isolated to its owner at the query layer, the prompt layer, and the retrieval layer.
-
-```
-Register → Create a project → Write its prompts → Upload documents → Chat
-```
-
-<div align="center">
-<img src="docs/screenshot-chat.png" alt="Chat interface" width="80%">
-<img src="docs/screenshot-prompts.png" alt="Prompts editor" width="80%">
-</div>
-
-### Try it
-
-| | |
-|---|---|
-| **URL** | https://chat-ai.jahirahmed.com |
-| **Sign up** | Registration is open — create an account in a few seconds |
-| **API docs** | https://chat-ai.jahirahmed.com/api/docs/ |
-
-Running it yourself takes about five minutes — see **[INSTALLATION.md](./INSTALLATION.md)**.
+<p>
+  <img src="images/img-2.png" alt="Projects page" width="32%">
+  <img src="images/img-4.png" alt="System prompts editor" width="32%">
+  <img src="images/img-5.png" alt="Document upload" width="32%">
+</p>
 
 ---
 
-## Contents
+## What it does
 
-- [Features](#features)
-- [Architecture](#architecture)
-- [Tech stack](#tech-stack)
-- [Data model](#data-model)
-- [API reference](#api-reference)
-- [Design decisions](#design-decisions)
-- [Non-functional requirements](#non-functional-requirements)
-- [Known limitations](#known-limitations)
-- [Project structure](#project-structure)
+1. **Create a project.** Each project is an agent with its own model and temperature.
+2. **Write its system prompts.** Add as many as you like and switch each one on or off.
+3. **Upload documents (optional).** The agent searches them when it answers.
+4. **Chat.** Conversations are saved, and you can keep several per project.
+
+Every user's projects, prompts, documents and chats are private to them.
+
+## Try it
+
+- **Live demo:** [chat-ai.jahirahmed.com](https://chat-ai.jahirahmed.com). Sign-up is closed at the moment, so you'll need an account from me; [get in touch](https://jahirahmed.com).
+- **On your own machine:** about five minutes with Docker. See the quick start below.
+
+## Quick start
+
+You need Docker and an OpenAI API key.
+
+```bash
+git clone https://github.com/Jahir509/chat-ai.git
+cd chat-ai
+cp backend/.env.example .env.development   # then fill in the development values from INSTALLATION.md (Option A)
+docker compose --env-file .env.development up -d --build
+docker compose --env-file .env.development exec backend python manage.py createsuperuser
+```
+
+Open <http://localhost:8080> and sign in with the account you just created.
+For running without Docker, production deployment and troubleshooting, see **[INSTALLATION.md](INSTALLATION.md)**.
 
 ---
 
 ## Features
 
-| | Feature | Notes |
-|---|---|---|
-| ✅ | **JWT authentication** | Register, login, refresh, logout. 15-minute access tokens, 7-day rotating refresh tokens with blacklist-after-rotation. |
-| ✅ | **Email-based accounts** | Custom user model, UUID primary keys, Argon2 password hashing, Django's password validators. |
-| ✅ | **Projects / agents** | Full CRUD. Per-project model selection and temperature. Unique name per owner. |
-| ✅ | **Prompt management** | Multiple named system prompts per project, individually toggleable. Active prompts are concatenated into the model's instructions at request time. |
-| ✅ | **Chat interface** | Multi-conversation, persisted history, windowed context, token accounting, optimistic UI. |
-| ✅ | **Document upload** | Files go to the OpenAI Files API and into a per-project vector store; the agent searches them via the `file_search` tool. |
-| ✅ | **Interactive API docs** | OpenAPI 3 schema with Swagger UI and ReDoc, JWT-aware so you can exercise every endpoint from the browser. |
-| ✅ | **Tenant isolation** | Every queryset is scoped to `request.user`. Cross-tenant reads return `404`, never `403`, so IDs can't be enumerated. |
-| ✅ | **One-command deploy** | Docker Compose, deployable standalone or behind an existing nginx. |
+- **Accounts:** sign in with email and password. Passwords are hashed with Argon2; refresh tokens rotate and are blacklisted after use.
+- **Projects (agents):** create, edit and delete them, each with its own model and temperature. Names are unique per user.
+- **Prompts:** several named system prompts per project, each with an on/off switch. The active ones are combined into the model's instructions.
+- **Chat:** several conversations per project, all saved. The model sees the last 20 messages, and each reply records its token usage.
+- **Documents:** upload files up to 20 MB (PDF, DOCX, TXT, MD, CSV and more). They go into a vector store for that project, and the agent searches it with OpenAI's `file_search` tool.
+- **Privacy between users:** another user's data always returns `404`, never `403`, so IDs can't be probed.
+- **API docs:** Swagger UI and ReDoc, generated from the code. You can sign in and call any endpoint from the browser.
+- **Deployment:** one Docker Compose command, standalone or behind an existing nginx.
 
----
-
-## Architecture
+## How it works
 
 ```mermaid
 flowchart LR
     U[Browser] -->|HTTPS| N[nginx]
     N -->|127.0.0.1:8083| C[Caddy]
     C -->|/api /admin /static| G[Gunicorn + Django]
-    C -->|everything else| S[React SPA]
+    C -->|everything else| S[React app]
     G --> P[(PostgreSQL 16)]
     G -->|Responses API| O[OpenAI]
     G -->|Files + Vector Stores| O
 ```
 
-Three containers, one origin. Caddy serves the compiled React bundle and reverse-proxies API paths to gunicorn, so the browser only ever talks to one host and CORS never enters the picture in production. The stack binds to loopback only, which lets it sit behind an existing nginx on a shared server without competing for ports 80 and 443.
+There are three containers behind one address. Caddy serves the React app and forwards API requests to Django, so the browser talks to a single host and CORS never comes up in production. In production the stack listens on `127.0.0.1` only, so it can sit behind an nginx that already owns ports 80 and 443.
 
-**Request path for a chat message:**
+**What happens when you send a message** (`POST /api/conversations/{id}/messages/`):
 
-```
-POST /api/conversations/{id}/messages/
-  │
-  ├─ 1. Resolve conversation, scoped to project__owner=request.user   → 404 if not yours
-  ├─ 2. Collect active system prompts → single instructions string
-  ├─ 3. Load the newest 20 messages (SQL LIMIT), reversed to chronological order
-  ├─ 4. Persist the user's message                                    ← committed before the API call
-  ├─ 5. Call OpenAI: instructions + history + file_search tool (if the project has files)
-  ├─ 6. Persist the assistant's reply with token counts
-  └─ 7. Return both rows
-```
-
-Step 4 before step 5 is deliberate: the user's message survives an upstream failure, so a retry never means retyping. The OpenAI call sits **outside** any database transaction, because holding a connection open for several seconds of network wait is how connection pools get exhausted.
-
----
+1. Find the conversation among the caller's own; anything else is a `404`.
+2. Combine the project's active system prompts into one instructions string.
+3. Load the newest 20 messages with a SQL `LIMIT`, then put them back in order.
+4. **Save the user's message**, before calling the model.
+5. Call OpenAI with the instructions and history, adding `file_search` if the project has documents.
+6. Save the reply with its token counts.
+7. Return both messages.
 
 ## Tech stack
 
 | Layer | Choice | Why |
 |---|---|---|
-| API | Django 5.2 + DRF | Batteries-included auth, admin, and migrations; DRF generics keep the CRUD surface tiny. |
-| Auth | `djangorestframework-simplejwt` | Stateless tokens → horizontally scalable with no shared session store. |
-| Database | PostgreSQL 16 | Real constraints, UUID support, and JSON if the schema needs to flex later. |
-| LLM | OpenAI Responses API | Current-generation endpoint with native tool support; wrapped behind a single module so it's swappable. |
-| Retrieval | OpenAI vector stores + `file_search` | Managed chunking and embeddings — no vector database to operate. |
-| Docs | `drf-spectacular` | Schema generated from the serializers, so it can't drift from the code. |
-| Frontend | React 19 + Vite | Fast dev loop, tiny static output. |
-| Styling | Tailwind CSS 4 | Utility-first; five hand-rolled primitives instead of a component library. |
-| HTTP client | axios | Interceptors make transparent token refresh a dozen lines. |
-| Serving | Caddy (in-container) | Static files plus API proxy from a five-line config. |
-| WSGI | gunicorn (`gthread`) | Threads block cheaply on network I/O — the right worker model for an LLM proxy. |
+| API | Django 5.2 + Django REST Framework | Auth, admin and migrations built in; DRF generic views keep the CRUD code small |
+| Auth | `djangorestframework-simplejwt` | Stateless tokens, so backend containers can scale without a shared session store |
+| Database | PostgreSQL 16 | Real constraints and native UUIDs |
+| Model | OpenAI Responses API | Current endpoint with built-in tools; wrapped in one module so it can be swapped |
+| Retrieval | OpenAI vector stores + `file_search` | Chunking and embeddings are managed, so there is no vector database to run |
+| API docs | `drf-spectacular` | Generated from the serializers, so the docs can't drift from the code |
+| Frontend | React 19 + Vite, Tailwind CSS 4 | Fast development loop and a small static build |
+| HTTP client | axios | An interceptor refreshes an expired token and replays the request |
+| Serving | Caddy, inside the frontend container | Serves the app and proxies the API from a few lines of config |
+| App server | gunicorn with `gthread` workers | Threads wait on the network cheaply, which suits an app that mostly waits on OpenAI |
+
+## Design decisions
+
+**Chat history lives in PostgreSQL, not at OpenAI.** Requests are sent with `store=false`, and history is replayed from the database. The database stays the only source of truth, nothing breaks when a stored response expires, switching providers touches one module, and OpenAI keeps no conversation content. Billing is the same either way.
+
+**Only the last 20 messages go to the model.** Every turn re-sends the history, so without a limit, cost and response time would grow with the length of a chat. A SQL `LIMIT` keeps the query cheap too.
+
+**The OpenAI call runs outside any database transaction.** A reply takes seconds. Holding a transaction open that long would use up the connection pool under load. The user's message is saved first, so a failed reply never loses it.
+
+**Document status is checked when you look, not by a background worker.** Indexing on OpenAI's side happens in the background. Rather than add Redis and Celery for one job, the file list refreshes any file still marked pending, and a file stuck for more than five minutes is marked failed so the page never polls forever. Celery is the upgrade path if uploads become heavy.
+
+**Another user's data returns `404`, not `403`.** Every query is filtered by owner before an ID is looked up, so another user's object simply isn't there. A `403` would confirm that it exists. It also means no individual view can forget the ownership check.
+
+**Duplicate project names are caught twice.** The serializer turns a duplicate into a readable `400`, and the database constraint still guarantees uniqueness when two requests arrive at once. Without the serializer check, a duplicate would surface as a `500`.
+
+**Gunicorn uses threads and a 120-second timeout.** Gunicorn's default 30 seconds would kill a slow model reply and return a bare `502`. With `gthread` workers, 3 workers × 4 threads handle 12 chats at once on a small server.
+
+**File-status polling stops on its own.** The browser schedules the next check only after a response that still shows a file indexing, with a cap on attempts. An earlier version used `setInterval` inside an effect, which started an extra timer on every refetch.
+
+## Production details
+
+**Security:** Argon2 password hashing, rotating and blacklistable refresh tokens, owner-scoped queries everywhere, the OpenAI key kept on the server, rate limits (20 requests per minute signed out, 120 signed in), file type and size checked before anything is sent to OpenAI, `nosniff` and `X-Frame-Options: DENY` headers, containers running as a non-root user, and a database that isn't exposed outside Docker.
+
+**Reliability:** a 60-second timeout with up to 2 retries on every OpenAI call, temporary OpenAI failures returned as a clear `503`, user messages saved before the model call, document indexing that always reaches a final status, a database health check that gates backend startup, `restart: unless-stopped` on every container, and best-effort cleanup on OpenAI so an error there can't leave a row you can't delete.
+
+**Performance and scale:** stateless auth so backend containers can scale out, persistent database connections, one OpenAI client per process (no new TLS handshake per request), paginated list endpoints, an index on `(conversation, created_at)` for the query behind every chat message, instant display of sent messages, and gzip for the frontend files.
+
+## Known limitations
+
+| Limitation | Planned fix |
+|---|---|
+| Replies aren't streamed, so you wait for the whole answer | Stream the reply with server-sent events |
+| Behind a CDN with a 100-second limit (such as Cloudflare), a very slow reply can fail with `524` | Streaming, or a longer proxy timeout |
+| After a reload, a long conversation shows only its first 20 messages | Load the newest messages first, with a "load earlier" button |
+| Deleting a project leaves its vector store and files on OpenAI | Delete them after the project is deleted |
+| Document status is refreshed when the file list is viewed, not by a worker | Celery and Redis, if uploads become heavy (a deliberate trade-off for now) |
+| No automated tests yet | pytest-django covering sign-in, privacy between users, and a mocked model |
+| Single region, with no CDN for uploaded content | Object storage with a CDN; managed PostgreSQL with read replicas |
 
 ---
 
-## Data model
+## Reference
+
+<details>
+<summary><b>API endpoints</b></summary>
+
+Interactive docs: **`/api/docs/`** (Swagger UI) and **`/api/redoc/`**. Machine-readable schema: `/api/schema/`.
+
+| Method | Path | What it does |
+|---|---|---|
+| `POST` | `/api/auth/login/` | Email and password in, access and refresh tokens out |
+| `POST` | `/api/auth/refresh/` | Swap a refresh token for a new pair |
+| `POST` | `/api/auth/logout/` | Blacklist a refresh token |
+| `GET` `PATCH` | `/api/auth/me/` | The signed-in user |
+| `POST` | `/api/auth/register/` | Create an account *(currently turned off)* |
+| `GET` `POST` | `/api/projects/` | List or create projects |
+| `GET` `PUT` `PATCH` `DELETE` | `/api/projects/{id}/` | One project |
+| `GET` `POST` | `/api/projects/{id}/prompts/` | List or add prompts |
+| `GET` `PUT` `PATCH` `DELETE` | `/api/projects/{id}/prompts/{prompt_id}/` | One prompt |
+| `GET` `POST` | `/api/projects/{id}/conversations/` | List or start conversations |
+| `GET` `DELETE` | `/api/conversations/{id}/` | One conversation |
+| `GET` | `/api/conversations/{id}/messages/` | Conversation history |
+| `POST` | `/api/conversations/{id}/messages/` | **Send a message and get the agent's reply** |
+| `GET` `POST` | `/api/projects/{id}/files/` | List files, or upload one (`multipart/form-data`) |
+| `DELETE` | `/api/projects/{id}/files/{file_id}/` | Remove a file here and on OpenAI |
+
+</details>
+
+<details>
+<summary><b>Example: the full flow with curl</b></summary>
+
+```bash
+BASE=http://localhost:8080/api
+
+# 1. Sign in (sign-up is off, so create the account with createsuperuser or in /admin/)
+TOKEN=$(curl -s -X POST $BASE/auth/login/ \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"me@example.com","password":"your-password"}' \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["access"])')
+
+# 2. Create a project
+PID=$(curl -s -X POST $BASE/projects/ \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"name":"Support Bot","description":"Answers product questions"}' \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
+
+# 3. Give it a persona
+curl -s -X POST $BASE/projects/$PID/prompts/ \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"name":"Persona","role":"system","content":"You are a concise support agent."}'
+
+# 4. Start a conversation
+CID=$(curl -s -X POST $BASE/projects/$PID/conversations/ \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}' \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
+
+# 5. Talk to it
+curl -s -X POST $BASE/conversations/$CID/messages/ \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"content":"How do I reset my password?"}'
+```
+
+</details>
+
+<details>
+<summary><b>Data model</b></summary>
 
 ```mermaid
 erDiagram
@@ -178,229 +262,46 @@ erDiagram
     }
 ```
 
-Two schema choices worth calling out:
-
-- **Prompts are rows, not a text column on `Project`.** That's what makes them individually toggleable, and it leaves room for versioning or A/B testing without a migration.
-- **UUID primary keys throughout.** Project and conversation IDs appear in URLs; sequential integers would leak volume and invite enumeration.
-
----
-
-## API reference
-
-Full interactive documentation at **`/api/docs/`** (Swagger UI) and **`/api/redoc/`**. Machine-readable schema at `/api/schema/`.
-
-### Auth
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/api/auth/register/` | Create an account; returns the user plus both tokens |
-| `POST` | `/api/auth/login/` | Email + password → access and refresh tokens |
-| `POST` | `/api/auth/refresh/` | Rotate the refresh token, get a new access token |
-| `POST` | `/api/auth/logout/` | Blacklist a refresh token |
-| `GET` `PATCH` | `/api/auth/me/` | Current user |
-
-### Projects and prompts
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` `POST` | `/api/projects/` | List or create projects |
-| `GET` `PUT` `PATCH` `DELETE` | `/api/projects/{id}/` | Retrieve, update, or delete |
-| `GET` `POST` | `/api/projects/{id}/prompts/` | List or add prompts |
-| `GET` `PUT` `PATCH` `DELETE` | `/api/projects/{id}/prompts/{prompt_id}/` | Manage one prompt |
-
-### Chat
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` `POST` | `/api/projects/{id}/conversations/` | List or start conversations |
-| `GET` `DELETE` | `/api/conversations/{id}/` | Retrieve or delete a conversation |
-| `GET` | `/api/conversations/{id}/messages/` | Conversation history |
-| `POST` | `/api/conversations/{id}/messages/` | **Send a message, get the agent's reply** |
-
-### Files
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` `POST` | `/api/projects/{id}/files/` | List files, or upload one (`multipart/form-data`) |
-| `DELETE` | `/api/projects/{id}/files/{file_id}/` | Remove locally and from OpenAI |
-
-<details>
-<summary><strong>Example: full flow with curl</strong></summary>
-
-```bash
-BASE=https://chat-ai.jahirahmed.com/api
-
-# 1. Register
-TOKEN=$(curl -s -X POST $BASE/auth/register/ \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"me@example.com","name":"Me","password":"Str0ng-Pass-42"}' \
-  | python3 -c 'import sys,json; print(json.load(sys.stdin)["access"])')
-
-# 2. Create a project
-PID=$(curl -s -X POST $BASE/projects/ \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"name":"Support Bot","description":"Answers product questions"}' \
-  | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
-
-# 3. Give it a persona
-curl -s -X POST $BASE/projects/$PID/prompts/ \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"name":"Persona","role":"system","content":"You are a concise support agent."}'
-
-# 4. Start a conversation
-CID=$(curl -s -X POST $BASE/projects/$PID/conversations/ \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}' \
-  | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
-
-# 5. Talk to it
-curl -s -X POST $BASE/conversations/$CID/messages/ \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"content":"How do I reset my password?"}'
-```
-
-</details>
-
----
-
-## Design decisions
-
-The choices below are the ones a reader is most likely to question, with the reasoning behind each.
-
-<details open>
-<summary><strong>Conversation state lives in PostgreSQL, not OpenAI</strong></summary>
-
-The Responses API can maintain state server-side via `previous_response_id`. This project sends `store=false` and replays history from its own database instead.
-
-- PostgreSQL stays the single source of truth — nothing breaks when a stored response expires
-- Swapping providers touches one module, not the data model
-- No conversation content is retained by the vendor
-- Billing is unchanged either way: prior input tokens are charged on every turn regardless
+- **Prompts are rows, not one text field on the project.** That is what lets each one be switched on and off, and it leaves room for versioning without a migration.
+- **IDs are UUIDs everywhere.** They appear in URLs, and sequential numbers would reveal how much data there is and invite guessing.
 
 </details>
 
 <details>
-<summary><strong>History is windowed to the last 20 messages</strong></summary>
-
-Every turn re-sends prior messages, so unbounded history means costs and latency that grow linearly with conversation length. The window is applied as a SQL `LIMIT` on `-created_at` and then reversed, so the query stays cheap and the model always receives the *most recent* context in chronological order.
-
-</details>
-
-<details>
-<summary><strong>The OpenAI call is outside any database transaction</strong></summary>
-
-An LLM request blocks for seconds. Wrapping it in `transaction.atomic()` would hold a Postgres connection open for that entire time, and under concurrency the pool would exhaust long before CPU or memory did. The user's message is committed first, then the API call runs, then the reply is committed — which also means an upstream failure never loses what the user typed.
-
-</details>
-
-<details>
-<summary><strong>File indexing status is refreshed on read, with a stale guard</strong></summary>
-
-Attaching a file to a vector store is asynchronous, so the upload endpoint returns a provisional `in_progress`. Rather than introduce Redis and Celery for one background job, the list endpoint refreshes any row still marked pending, and the frontend polls only while at least one file is pending.
-
-The important detail is the **stale guard**: if a file has been `in_progress` for more than five minutes, it is marked `failed`. Without a guaranteed terminal state, an upstream error leaves the row pending forever and the client polls indefinitely. Celery is the natural upgrade if uploads grow heavy.
-
-</details>
-
-<details>
-<summary><strong>Polling is a chain of timeouts, not an interval on a state dependency</strong></summary>
-
-The client schedules the next status check only after a response that still shows work pending, with an attempt cap and a run counter that invalidates superseded chains. An earlier version used `setInterval` inside an effect that depended on the fetched array — every refetch produced a new array identity, restarting the effect and stacking timers. Depending on derived booleans rather than object identity is the general fix.
-
-</details>
-
-<details>
-<summary><strong>Uniqueness is validated in the serializer <em>and</em> the database</strong></summary>
-
-`Project` has a `UniqueConstraint` on `(owner, name)`, but `owner` isn't a serializer field, so DRF cannot generate the validator automatically. Without an explicit `validate_name`, a duplicate produces an `IntegrityError` and a 500. The serializer check makes the common case a readable 400; the database constraint remains the correctness guarantee under concurrent writes.
-
-</details>
-
-<details>
-<summary><strong>Cross-tenant access returns 404, not 403</strong></summary>
-
-Every view narrows its queryset by owner before looking up an ID, so a foreign object simply isn't in the result set. A 403 would confirm the resource exists and let an attacker enumerate valid IDs; a 404 reveals nothing. This also means ownership checks can't be forgotten in individual handlers — the queryset is the boundary.
-
-</details>
-
-<details>
-<summary><strong>Gunicorn's timeout is raised to 120 seconds</strong></summary>
-
-The default is 30, and gunicorn kills any worker that exceeds it. A slow model reply would return a bare 502 with nothing useful in the logs — the most common way an LLM application works in development and fails in production. Every proxy in front of it is configured to match. Paired with `gthread` workers, since threads block cheaply on network I/O: 3 workers × 4 threads serves 12 concurrent chat requests on a modest VPS.
-
-</details>
-
-<details>
-<summary><strong>Five styling primitives instead of a component library</strong></summary>
-
-`Button`, `Input`, `Textarea`, `Card`, `Spinner` — about 60 lines total. That is less code than configuring a component library's theme, ships nothing unused, and avoids the reset-vs-Preflight conflicts that come from mixing a CSS framework with a styled component kit.
-
-</details>
-
----
-
-## Non-functional requirements
-
-| Requirement | How it's addressed |
-|---|---|
-| **Scalability** | Stateless JWT auth — no shared session store, so backend containers scale horizontally. Threaded workers for I/O-bound LLM calls. Paginated list endpoints. Composite index on `(conversation, created_at)`, the query on every chat request. Connection reuse via `CONN_MAX_AGE`. |
-| **Security** | Argon2 hashing. Short access tokens with rotating, blacklistable refresh tokens. Per-object ownership scoping on every queryset. API keys server-side only. Request throttling (20/min anonymous, 120/min authenticated). Upload type and size validation before bytes leave the server. HSTS, secure cookies, `nosniff`, `X-Frame-Options: DENY` when running over HTTPS. Non-root container user. Database not exposed to the host network. |
-| **Extensibility** | The LLM integration is one module behind a narrow interface — provider swaps don't touch views or models. Prompts are rows, so versioning and analytics need no schema change. Apps are split by domain (`users`, `projects`, `chat`, `files`). OpenAPI schema generated from code, ready for typed client generation. |
-| **Performance** | Connection pooling and a process-level OpenAI client, so no TLS handshake per request. Windowed history keeps token counts flat as conversations grow. Optimistic UI updates make sends and deletes feel instant. Gzip compression and long-lived caching on static assets. |
-| **Reliability** | Timeouts and bounded retries on every upstream call, with transient failures mapped to a clean `503` and a readable message. User messages persisted before the API call, so failures never lose input. Guaranteed terminal state for async file indexing. Database `healthcheck` gates backend startup. `restart: unless-stopped` on every container. Structured logging of upstream failures. Best-effort remote cleanup so a vendor-side error can't create an undeletable local row. |
-
-
----
-
-## Known limitations
-
-Stated plainly, with the fix in each case:
-
-| Limitation | Fix |
-|---|---|
-| Replies are not streamed, so time-to-first-token equals full generation time | Return `StreamingHttpResponse` over SSE from the message endpoint; the architecture is otherwise unchanged |
-| Deleting a project leaves its vector store and files on OpenAI | A `pre_delete` signal calling the cleanup helpers |
-| Message history is paginated at 20, so long conversations look truncated in the UI even though the model still receives recent context | `pagination_class = None` on the message view, or cursor pagination |
-| File indexing status is refreshed on read rather than by a worker | Celery + Redis, with a webhook or periodic task |
-| Behind a CDN with a 100s proxy timeout, a very slow reply can return 524 even though gunicorn allows 120s | Stream the response, or raise the proxy timeout |
-| No automated test suite | pytest-django covering auth flows, tenant isolation, and a mocked LLM client |
-| Single-region deployment, no CDN for user content | Object storage plus a CDN; managed Postgres with read replicas |
-
----
-
-## Project structure
+<summary><b>Project structure</b></summary>
 
 ```
 chat-ai/
 ├── backend/
-│   ├── config/                 settings, root urls, wsgi
+│   ├── config/            settings, root URLs, WSGI
 │   ├── apps/
-│   │   ├── users/              custom user, JWT auth endpoints
-│   │   ├── projects/           Project and Prompt
-│   │   ├── chat/               Conversation, Message, chat endpoint
-│   │   ├── files/              uploads, vector-store attachment
-│   │   └── llm/                OpenAI client wrapper (the only vendor-aware module)
-│   ├── entrypoint.sh           migrate → collectstatic → gunicorn
+│   │   ├── users/         custom user model, sign-in endpoints
+│   │   ├── projects/      projects and prompts
+│   │   ├── chat/          conversations, messages, the chat endpoint
+│   │   ├── files/         uploads and vector-store attachment
+│   │   └── llm/           OpenAI client (the only module that knows the vendor)
+│   ├── .env.example       configuration template
+│   ├── entrypoint.sh      migrate, collectstatic, then start gunicorn
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── api/client.js       axios instance, token refresh interceptor
-│   │   ├── auth/AuthContext.jsx
-│   │   ├── components/         Layout, ChatPanel, PromptsPanel, FilesPanel
-│   │   ├── pages/              Login, Register, Projects, ProjectDetail
-│   │   └── ui.jsx              styling primitives
-│   ├── Caddyfile               static serving + API reverse proxy
-│   └── Dockerfile              multi-stage: node build → caddy
+│   │   ├── api/client.js  axios instance with token refresh
+│   │   ├── auth/          sign-in state
+│   │   ├── components/    Layout, ChatPanel, PromptsPanel, FilesPanel
+│   │   ├── pages/         Login, Register, Projects, ProjectDetail
+│   │   └── ui.jsx         small styling components
+│   ├── Caddyfile          serves the app and proxies the API
+│   └── Dockerfile         builds with Node, serves with Caddy
+├── images/                screenshots
+├── video/                 demo video
 ├── docker-compose.yml
-├── .env.example
 ├── INSTALLATION.md
 └── README.md
 ```
 
+</details>
+
 ---
 
-<div align="center">
-
-Built with Django REST Framework, React, and the OpenAI Responses API.
-
-</div>
+Built with Django REST Framework, React and the OpenAI Responses API.
